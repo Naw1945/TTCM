@@ -1,0 +1,356 @@
+[
+  {
+    "thoi_gian": "2026-09-25 16:02:06",
+    "tieu_chi": {
+      "Giá( VNĐ)": 450000000,
+      "Công suất(HP)": 255,
+      "Chỗ ngồi": 5,
+      "Nhiên liệu": "Dầu",
+      "Mục đích": "Dịch vụ",
+      "Tình trạng": "Cũ"
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.255,
+      "Nhiên liệu": 0.255,
+      "Công suất(HP)": 0.064,
+      "Chỗ ngồi": 0.178,
+      "Mục đích": 0.032,
+      "Tình trạng": 0.153,
+      "Kiểu xe": 0.032,
+      "Hộp số": 0.032
+    },
+    "ket_qua_hang_dau": [
+      "Ford Ranger XLS 2.2L 4x2 MT 2018",
+      "Mazda BT-50",
+      "Ford Everest 2.5L 4x2 MT 2013",
+      "VinFast VF5 Plus 2025",
+      "Jazz 1.5 VX (2019)"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:07:17",
+    "tieu_chi": {
+      "Giá( VNĐ)": 180000000.0
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.125,
+      "Nhiên liệu": 0.125,
+      "Công suất(HP)": 0.125,
+      "Chỗ ngồi": 0.125,
+      "Mục đích": 0.125,
+      "Tình trạng": 0.125,
+      "Kiểu xe": 0.125,
+      "Hộp số": 0.125
+    },
+    "ket_qua_hang_dau": [
+      "VinFast VF2 Eco 2026"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:08:38",
+    "tieu_chi": {
+      "Giá( VNĐ)": 180000000.0,
+      "Công suất(HP)": 70.0,
+      "Chỗ ngồi": 4,
+      "Nhiên liệu": "Dầu",
+      "Mục đích": "Cá nhân & Gia đình",
+      "Tình trạng": "Mới",
+      "Kiểu xe": "Hatchback",
+      "Hộp số": "AT"
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.263,
+      "Nhiên liệu": 0.105,
+      "Công suất(HP)": 0.105,
+      "Chỗ ngồi": 0.105,
+      "Mục đích": 0.105,
+      "Tình trạng": 0.105,
+      "Kiểu xe": 0.105,
+      "Hộp số": 0.105
+    },
+    "ket_qua_hang_dau": [
+      "VinFast VF2 Eco 2026"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:16:26",
+    "tieu_chi": {
+      "Giá( VNĐ)": 270000000.0,
+      "Công suất(HP)": 70.0,
+      "Chỗ ngồi": 4,
+      "Nhiên liệu": "Dầu",
+      "Mục đích": "Cá nhân & Gia đình",
+      "Tình trạng": "Mới",
+      "Kiểu xe": "Hatchback",
+      "Hộp số": "AT"
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.263,
+      "Nhiên liệu": 0.105,
+      "Công suất(HP)": 0.105,
+      "Chỗ ngồi": 0.105,
+      "Mục đích": 0.105,
+      "Tình trạng": 0.105,
+      "Kiểu xe": 0.105,
+      "Hộp số": 0.105
+    },
+    "ket_qua_hang_dau": [
+      "VinFast VF2 Eco 2026",
+      "VinFast Minio Green AT 2026",
+      "VinFast VF3 Plus 2025"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:19:36",
+    "tieu_chi": {
+      "Giá( VNĐ)": 800000000.0,
+      "Công suất(HP)": 150.0,
+      "Chỗ ngồi": 5
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.125,
+      "Nhiên liệu": 0.125,
+      "Công suất(HP)": 0.125,
+      "Chỗ ngồi": 0.125,
+      "Mục đích": 0.125,
+      "Tình trạng": 0.125,
+      "Kiểu xe": 0.125,
+      "Hộp số": 0.125
+    },
+    "ket_qua_hang_dau": [
+      "K5 2.0 Luxury",
+      "K3 2.0 Premium",
+      "Mazda CX-30 2.0L Premium",
+      "New Sportage 2.0G",
+      "Mazda CX-5 2.0L Deluxe"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:20:21",
+    "tieu_chi": {
+      "Giá( VNĐ)": 800000000.0,
+      "Công suất(HP)": 150.0,
+      "Chỗ ngồi": 5,
+      "Kiểu xe": "SUV/CUV"
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.125,
+      "Nhiên liệu": 0.125,
+      "Công suất(HP)": 0.125,
+      "Chỗ ngồi": 0.125,
+      "Mục đích": 0.125,
+      "Tình trạng": 0.125,
+      "Kiểu xe": 0.125,
+      "Hộp số": 0.125
+    },
+    "ket_qua_hang_dau": [
+      "Mazda CX-30 2.0L Premium",
+      "New Sportage 2.0G",
+      "Mazda CX-5 2.0L Deluxe",
+      "Tucson 2.0 Tiêu Chuẩn",
+      "Mazda CX-30 2.0L Luxury"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:41:09",
+    "tieu_chi": {
+      "Giá( VNĐ)": 8030000000.0,
+      "Công suất(HP)": 40.0,
+      "Kiểu xe": "SUV/CUV"
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.125,
+      "Nhiên liệu": 0.125,
+      "Công suất(HP)": 0.125,
+      "Chỗ ngồi": 0.125,
+      "Mục đích": 0.125,
+      "Tình trạng": 0.125,
+      "Kiểu xe": 0.125,
+      "Hộp số": 0.125
+    },
+    "ket_qua_hang_dau": [
+      "LAND CRUISER 300",
+      "LAND CRUISER PRADO",
+      "EQB 250",
+      "GLS 450 4MATIC",
+      "X7"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:48:09",
+    "tieu_chi": {
+      "Giá( VNĐ)": 8040000000,
+      "Công suất(HP)": 152,
+      "Kiểu xe": "SUV/CUV"
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.125,
+      "Nhiên liệu": 0.125,
+      "Công suất(HP)": 0.125,
+      "Chỗ ngồi": 0.125,
+      "Mục đích": 0.125,
+      "Tình trạng": 0.125,
+      "Kiểu xe": 0.125,
+      "Hộp số": 0.125
+    },
+    "ket_qua_hang_dau": [
+      "LAND CRUISER 300",
+      "X7",
+      "GLS 450 4MATIC",
+      "LAND CRUISER PRADO",
+      "GLE 450 4MATIC"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:49:10",
+    "tieu_chi": {
+      "Giá( VNĐ)": 8040000000,
+      "Công suất(HP)": 152,
+      "Chỗ ngồi": 5,
+      "Kiểu xe": "SUV/CUV"
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.125,
+      "Nhiên liệu": 0.125,
+      "Công suất(HP)": 0.125,
+      "Chỗ ngồi": 0.125,
+      "Mục đích": 0.125,
+      "Tình trạng": 0.125,
+      "Kiểu xe": 0.125,
+      "Hộp số": 0.125
+    },
+    "ket_qua_hang_dau": [
+      "Q7 SUV",
+      "LAND CRUISER 300",
+      "X6",
+      "X7",
+      "GLS 450 4MATIC"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:50:19",
+    "tieu_chi": {
+      "Giá( VNĐ)": 15990000000.0,
+      "Công suất(HP)": 40.0
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.125,
+      "Nhiên liệu": 0.125,
+      "Công suất(HP)": 0.125,
+      "Chỗ ngồi": 0.125,
+      "Mục đích": 0.125,
+      "Tình trạng": 0.125,
+      "Kiểu xe": 0.125,
+      "Hộp số": 0.125
+    },
+    "ket_qua_hang_dau": [
+      "Mercedes-Maybach GLS 480 4MATIC",
+      "Mercedes-Maybach S 450 4MATIC",
+      "8 Series Gran Coupé",
+      "Mercedes-Maybach GLS 600 4MATIC",
+      "Mercedes-AMG G 63"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:51:16",
+    "tieu_chi": {
+      "Giá( VNĐ)": 8040000000.0,
+      "Công suất(HP)": 150.0,
+      "Chỗ ngồi": 5,
+      "Kiểu xe": "SUV/CUV"
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.125,
+      "Nhiên liệu": 0.125,
+      "Công suất(HP)": 0.125,
+      "Chỗ ngồi": 0.125,
+      "Mục đích": 0.125,
+      "Tình trạng": 0.125,
+      "Kiểu xe": 0.125,
+      "Hộp số": 0.125
+    },
+    "ket_qua_hang_dau": [
+      "Q7 SUV",
+      "LAND CRUISER 300",
+      "X6",
+      "X7",
+      "GLS 450 4MATIC"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:51:47",
+    "tieu_chi": {
+      "Giá( VNĐ)": 8040000000.0,
+      "Chỗ ngồi": 5,
+      "Kiểu xe": "SUV/CUV"
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.125,
+      "Nhiên liệu": 0.125,
+      "Công suất(HP)": 0.125,
+      "Chỗ ngồi": 0.125,
+      "Mục đích": 0.125,
+      "Tình trạng": 0.125,
+      "Kiểu xe": 0.125,
+      "Hộp số": 0.125
+    },
+    "ket_qua_hang_dau": [
+      "Mercedes-Benz G 580 EQ",
+      "GLE 53 4MATIC+ Coupe",
+      "X7",
+      "Mercedes-Maybach EQS 680 SUV",
+      "GLS 450 4MATIC"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:52:22",
+    "tieu_chi": {
+      "Giá( VNĐ)": 820000000.0,
+      "Chỗ ngồi": 5,
+      "Kiểu xe": "SUV/CUV"
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.125,
+      "Nhiên liệu": 0.125,
+      "Công suất(HP)": 0.125,
+      "Chỗ ngồi": 0.125,
+      "Mục đích": 0.125,
+      "Tình trạng": 0.125,
+      "Kiểu xe": 0.125,
+      "Hộp số": 0.125
+    },
+    "ket_qua_hang_dau": [
+      "VinFast VF8 Plus AWD 2023",
+      "VinFast VF8 Plus AWD 2022",
+      "VinFast VF8 Eco AWD 2023",
+      "Pilot 3.5",
+      "VinFast Lux SA 2.0 Base 2.0 AT 2021"
+    ]
+  },
+  {
+    "thoi_gian": "2026-10-23 10:52:41",
+    "tieu_chi": {
+      "Giá( VNĐ)": 820000000.0,
+      "Công suất(HP)": 150.0,
+      "Chỗ ngồi": 5,
+      "Kiểu xe": "SUV/CUV"
+    },
+    "trong_so": {
+      "Giá( VNĐ)": 0.125,
+      "Nhiên liệu": 0.125,
+      "Công suất(HP)": 0.125,
+      "Chỗ ngồi": 0.125,
+      "Mục đích": 0.125,
+      "Tình trạng": 0.125,
+      "Kiểu xe": 0.125,
+      "Hộp số": 0.125
+    },
+    "ket_qua_hang_dau": [
+      "New Sportage 2.0G",
+      "Mazda CX-30 2.0L Premium",
+      "Mazda CX-5 2.0L Deluxe",
+      "Tucson 2.0 Tiêu Chuẩn",
+      "Mazda CX-30 2.0L Luxury"
+    ]
+  }
+]

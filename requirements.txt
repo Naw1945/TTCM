@@ -1,0 +1,12 @@
+
+fastapi
+uvicorn[standard]
+pydantic
+pandas
+numpy
+scikit-learn
+streamlit
+requests
+google-genai
+pytest
+httpx
