@@ -1,0 +1,84 @@
+{
+  "model_name": "car_knn_recommender",
+  "version": "1.0.0",
+  "algorithm": "Weighted KNN (content-based)",
+  "distance": "Euclidean có trọng số",
+  "scaler": "MinMaxScaler",
+  "trained_at": "2026-10-24T22:59:11",
+  "numeric_features": [
+    "Giá( VNĐ)",
+    "Công suất(HP)",
+    "Chỗ ngồi"
+  ],
+  "categorical_features": [
+    "Nhiên liệu",
+    "Mục đích",
+    "Tình trạng",
+    "Kiểu xe",
+    "Hộp số"
+  ],
+  "all_groups": [
+    "Giá( VNĐ)",
+    "Nhiên liệu",
+    "Công suất(HP)",
+    "Chỗ ngồi",
+    "Mục đích",
+    "Tình trạng",
+    "Kiểu xe",
+    "Hộp số"
+  ],
+  "default_weights": {
+    "Giá( VNĐ)": 0.125,
+    "Nhiên liệu": 0.125,
+    "Công suất(HP)": 0.125,
+    "Chỗ ngồi": 0.125,
+    "Mục đích": 0.125,
+    "Tình trạng": 0.125,
+    "Kiểu xe": 0.125,
+    "Hộp số": 0.125
+  },
+  "categories": {
+    "Nhiên liệu": [
+      "Dầu",
+      "Hybrid",
+      "Xăng",
+      "Điện"
+    ],
+    "Mục đích": [
+      "Cá nhân & Gia đình",
+      "Dịch vụ"
+    ],
+    "Tình trạng": [
+      "Cũ",
+      "Mới"
+    ],
+    "Kiểu xe": [
+      "Bán tải",
+      "Coupe",
+      "Hatchback",
+      "MPV",
+      "SUV/CUV",
+      "Sedan",
+      "Thương mại/Van"
+    ],
+    "Hộp số": [
+      "AT",
+      "MT"
+    ]
+  },
+  "feature_ranges": {
+    "Giá( VNĐ)": [
+      180000000.0,
+      15990000000.0
+    ],
+    "Công suất(HP)": [
+      40.23,
+      912.0
+    ],
+    "Chỗ ngồi": [
+      2.0,
+      18.0
+    ]
+  },
+  "n_samples": 365
+}

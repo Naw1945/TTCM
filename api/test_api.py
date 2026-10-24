@@ -1,89 +1,53 @@
+import sys
+from pathlib import Path
 
-import time
+# Thêm thư mục gốc vào sys.path để import được module api
+ROOT_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT_DIR))
 
-import pytest
 from fastapi.testclient import TestClient
-
-from api.main import app, df
-
+from api.main import app
 
 client = TestClient(app)
 
-
 def test_model_info():
     response = client.get("/model-info")
-
     assert response.status_code == 200
-
     data = response.json()
-    assert data["model"] == "KNN"
-    assert data["scaler"] == "MinMaxScaler"
-    assert data["dataset_rows"] > 0
+    assert data["algorithm"] == "Weighted KNN (content-based)"
+    assert data["n_samples"] > 0
 
-
-def test_recommend_valid_request():
+def test_recommend_basic():
+    # Dùng ngân sách 20 tỷ để chắc chắn không loại chiếc xe nào
     payload = {
-        "criteria": {
-            "Giá( VNĐ)": float(df["Giá( VNĐ)"].max()),
-        },
+        "criteria": {"Giá( VNĐ)": 20000000000, "Chỗ ngồi": 5}, 
         "weights": {},
-        "k": 5,
+        "k": 3
     }
-
     response = client.post("/recommend", json=payload)
-
     assert response.status_code == 200
-
     data = response.json()
-    assert "recommendations" in data
-    assert "count" in data
-    assert data["count"] == len(data["recommendations"])
+    assert data["count"] == 3
+    # Đảm bảo bộ lọc cứng hoạt động
+    for car in data["recommendations"]:
+        assert car["Giá( VNĐ)"] <= 20000000000
+        assert car["Chỗ ngồi"] >= 5
 
-
-def test_recommend_invalid_request():
-    payload = {
-        "criteria": {
-            "Giá( VNĐ)": -100,
-        },
-        "weights": {},
-        "k": 5,
-    }
-
+def test_recommend_price_optional():
+    # Test bug 4 đã fix: Bỏ trống ngân sách không bị lỗi 422
+    payload = {"criteria": {"Nhiên liệu": "Điện"}, "weights": {}, "k": 2}
     response = client.post("/recommend", json=payload)
+    assert response.status_code == 200
+    assert response.json()["count"] == 2
 
+def test_recommend_invalid_category():
+    # Test chặn dữ liệu rác (Nhiên liệu không có trong data)
+    payload = {"criteria": {"Nhiên liệu": "Nước"}, "weights": {}, "k": 2}
+    response = client.post("/recommend", json=payload)
     assert response.status_code == 422
 
-
-def test_recommend_budget_too_low():
-    payload = {
-        "criteria": {
-            "Giá( VNĐ)": 1,
-        },
-        "weights": {},
-        "k": 5,
-    }
-
-    response = client.post("/recommend", json=payload)
-
+def test_compare_cars():
+    payload = {"car_names": ["VIOS 1.5E-MT", "VIOS 1.5E-CVT"]}
+    response = client.post("/compare", json=payload)
     assert response.status_code == 200
-    assert response.json()["recommendations"] == []
-
-
-def test_recommend_response_time():
-    payload = {
-        "criteria": {
-            "Giá( VNĐ)": float(df["Giá( VNĐ)"].max()),
-        },
-        "weights": {},
-        "k": 5,
-    }
-
-    start = time.perf_counter()
-    response = client.post("/recommend", json=payload)
-    elapsed = time.perf_counter() - start
-
-    assert response.status_code == 200
-    print(f"\nThời gian phản hồi: {elapsed * 1000:.2f} ms")
-
-    # Chỉ kiểm tra hiệu năng KNN khi chạy test.
-    # Không áp ngưỡng cứng vì thời gian máy và Gemini có thể biến động.
+    assert len(response.json()["cars"]) == 2

@@ -10,3 +10,4 @@ requests
 google-genai
 pytest
 httpx
+joblib

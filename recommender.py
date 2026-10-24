@@ -1,35 +1,50 @@
-
 """
 recommender.py
-Xử lý dữ liệu và xây dựng mô hình KNN (Nearest Neighbors) để gợi ý xe
-dựa trên tiêu chí khách hàng nhập vào.
+Xử lý dữ liệu và bọc KNN (content-based) để gợi ý xe.
 
-- Trọng số do người dùng tự điều chỉnh qua giao diện (không còn luật IF-THEN tự động).
-  Giao diện chịu trách nhiệm chuẩn hóa để tổng trọng số luôn bằng 1 trước khi gọi recommend().
-- Ngân sách được xử lý bằng bộ lọc cứng (loại xe vượt ngân sách) trước khi tính khoảng cách.
-- Khoảng cách Euclid có trọng số: d_w(p,q) = sqrt(sum_i w_i * (p_i - q_i)^2).
-- Độ phù hợp: Score(p,q) = 1 / (1 + d_w) * 100%.
+THIẾT KẾ (quan trọng — đọc kỹ):
+- 3 tiêu chí số (Giá, Công suất, Chỗ ngồi) đóng vai trò BỘ LỌC CỨNG:
+    * Giá     : xe.price       <= ngân sách
+    * Công suất: xe.power      >= mức tối thiểu
+    * Chỗ ngồi : xe.seats      >= mức tối thiểu
+  Các xe không đạt bị loại khỏi tập ứng viên TRƯỚC khi tính KNN.
+- 5 tiêu chí phân loại (Nhiên liệu, Mục đích, Tình trạng, Kiểu xe, Hộp số)
+  tham gia vào khoảng cách Euclid có trọng số (KNN).
+- Trọng số người dùng chỉnh trên sidebar được chuẩn hóa tổng = 1.
+  Riêng 3 tiêu chí số, trọng số không ảnh hưởng (vì đã là bộ lọc cứng);
+  ta vẫn giữ UI để người dùng thấy "trọng số" nhưng thực tế bị gán = 0.
+- Công thức khoảng cách: d_w(p,q) = sqrt( sum_i w_i * (p_i - q_i)^2 )
+- Điểm phù hợp       : score(p,q) = 1 / (1 + d_w) * 100%
+
+Tách riêng class CarRecommender để:
+  - model/train_export.py có thể khởi tạo và export "bundle" (joblib).
+  - api/main.py có thể nạp lại bundle đó (from_bundle) mà không cần CSV.
 """
 
-import pandas as pd
+from __future__ import annotations
+
 import numpy as np
+import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
 NUMERIC_COLS = ["Giá( VNĐ)", "Công suất(HP)", "Chỗ ngồi"]
 CATEGORICAL_COLS = ["Nhiên liệu", "Mục đích", "Tình trạng", "Kiểu xe", "Hộp số"]
-ALL_GROUPS = ["Giá( VNĐ)", "Nhiên liệu", "Công suất(HP)", "Chỗ ngồi",
-              "Mục đích", "Tình trạng", "Kiểu xe", "Hộp số"]
+ALL_GROUPS = [
+    "Giá( VNĐ)", "Nhiên liệu", "Công suất(HP)", "Chỗ ngồi",
+    "Mục đích", "Tình trạng", "Kiểu xe", "Hộp số",
+]
 
-# Trọng số mặc định khi mở ứng dụng lần đầu (người dùng có thể chỉnh lại bằng slider).
-# Chia đều 1/8 cho mỗi nhóm để không thiên vị thuộc tính nào.
+# Trọng số mặc định: chia đều.
 DEFAULT_WEIGHTS = {g: 1.0 / len(ALL_GROUPS) for g in ALL_GROUPS}
 
 
+# ---------------------------------------------------------------------------
+# Hàm tiện ích
+# ---------------------------------------------------------------------------
 def normalize_weights(raw_weights: dict) -> dict:
-    """
-    Chuẩn hóa một bộ trọng số bất kỳ (giá trị dương tùy ý từ slider) về đúng
-    ràng buộc công thức (2.3): không âm và tổng bằng 1.
-    Nếu tổng bằng 0 (người dùng kéo hết về 0), trả về bộ trọng số chia đều.
+    """Chuẩn hóa trọng số về [0, ∞) và tổng = 1.
+
+    Nếu tổng = 0 (người dùng kéo hết slider về 0), trả về bộ mặc định.
     """
     total = sum(max(v, 0.0) for v in raw_weights.values())
     if total <= 1e-9:
@@ -38,7 +53,7 @@ def normalize_weights(raw_weights: dict) -> dict:
 
 
 def load_and_clean_data(path: str) -> pd.DataFrame:
-    """Đọc CSV gốc và làm sạch dữ liệu."""
+    """Đọc CSV gốc và làm sạch."""
     df = pd.read_csv(path)
 
     df = df.dropna(subset=["Tên xe"]).reset_index(drop=True)
@@ -49,142 +64,132 @@ def load_and_clean_data(path: str) -> pd.DataFrame:
         df["Giá( VNĐ)"].astype(str).str.replace(".", "", regex=False).astype(float)
     )
 
-    # Công suất: chuỗi số (có thể dùng dấu phẩy thập phân kiểu VN, vd "134,1") -> float
+    # Công suất: có thể có dấu phẩy thập phân kiểu VN (vd "134,1")
     df["Công suất(HP)"] = (
         df["Công suất(HP)"].astype(str).str.replace(",", ".", regex=False).astype(float)
     )
 
-    # Chuẩn hóa khoảng trắng thừa ở các cột phân loại khác
+    # Chuẩn hóa khoảng trắng ở các cột phân loại
     for col in CATEGORICAL_COLS:
         if col != "Nhiên liệu":
             df[col] = df[col].astype(str).str.strip()
 
-    df = df.reset_index(drop=True)
-    return df
+    return df.reset_index(drop=True)
 
 
+# ---------------------------------------------------------------------------
+# Lớp CarRecommender
+# ---------------------------------------------------------------------------
 class CarRecommender:
-    """
-    Bọc toàn bộ pipeline: chuẩn hóa Min-Max, One-Hot Encoding, phân bổ trọng số
-    nhóm cho từng cột thành phần (chia đều: w_g,j = W_g / m_g), lọc cứng theo
-    ngân sách, và tính khoảng cách Euclid có trọng số bằng công thức (2.2).
+    """Bọc pipeline: MinMaxScaler + One-hot thủ công + KNN có trọng số.
+
+    Có 2 cách khởi tạo:
+      - CarRecommender(df)                : dùng khi train (model/train_export.py)
+      - CarRecommender.from_bundle(bundle): dùng khi inference (api/main.py)
     """
 
     def __init__(self, df: pd.DataFrame):
         self.df = df.reset_index(drop=True)
 
-        # --- Chuẩn hóa Min-Max các cột số về [0, 1] ---
+        # (1) Chuẩn hóa Min-Max các cột số về [0, 1]
         self.scaler = MinMaxScaler()
         self.numeric_scaled = pd.DataFrame(
             self.scaler.fit_transform(self.df[NUMERIC_COLS]),
             columns=NUMERIC_COLS,
         )
 
-        # --- One-Hot Encoding cho các cột phân loại ---
-        self.encoded_cat = pd.get_dummies(self.df[CATEGORICAL_COLS], prefix=CATEGORICAL_COLS)
+        # (2) One-hot cho các cột phân loại
+        self.encoded_cat = pd.get_dummies(
+            self.df[CATEGORICAL_COLS], prefix=CATEGORICAL_COLS,
+        )
         self.cat_col_map = {
             col: [c for c in self.encoded_cat.columns if c.startswith(f"{col}_")]
             for col in CATEGORICAL_COLS
         }
 
-        # Ma trận đặc trưng đầy đủ (chưa nhân trọng số) — dùng lại cho mọi truy vấn
+        # (3) Ma trận đặc trưng đầy đủ (chưa nhân trọng số)
         self.feature_matrix = pd.concat(
-            [self.numeric_scaled[NUMERIC_COLS], self.encoded_cat], axis=1
+            [self.numeric_scaled[NUMERIC_COLS], self.encoded_cat], axis=1,
         ).astype(float)
 
     # ------------------------------------------------------------------
-    def _scale_numeric(self, col: str, value: float) -> float:
-        """Đưa 1 giá trị số về cùng thang [0, 1] mà scaler đã học từ dữ liệu gốc."""
-        idx = NUMERIC_COLS.index(col)
-        data_min = self.scaler.data_min_[idx]
-        data_range = self.scaler.data_range_[idx]
-        if data_range <= 1e-9:
-            return 0.5
-        return float(np.clip((value - data_min) / data_range, 0.0, 1.0))
+    @classmethod
+    def from_bundle(cls, bundle: dict) -> "CarRecommender":
+        """Nạp lại recommender từ bundle đã export bằng joblib.
 
-    def _criteria_breakdown(self, query: dict, row: pd.Series):
+        bundle có dạng:
+            {
+              "scaler":          MinMaxScaler đã fit,
+              "cat_col_map":     dict[str, list[str]],
+              "feature_matrix":  pd.DataFrame,
+              "df":              pd.DataFrame gốc (đã clean),
+            }
         """
-        Tính % đáp ứng cho TỪNG tiêu chí mà người dùng đã chọn (bỏ qua các
-        tiêu chí để "Không yêu cầu") và sinh câu giải thích ngắn cho mỗi tiêu chí.
+        obj = cls.__new__(cls)
+        obj.df = bundle["df"]
+        obj.scaler = bundle["scaler"]
+        obj.cat_col_map = bundle["cat_col_map"]
+        obj.feature_matrix = bundle["feature_matrix"]
+        # numeric_scaled và encoded_cat không cần thiết khi chỉ inference
+        return obj
 
-        - Cột số (Giá, Công suất, Chỗ ngồi):
-          % = (1 - |giá trị xe đã chuẩn hóa - giá trị yêu cầu đã chuẩn hóa|) * 100
-        - Cột phân loại (Nhiên liệu, Mục đích, Tình trạng, Kiểu xe, Hộp số):
-          % = 100 nếu trùng khớp, 0 nếu khác.
+    def to_bundle(self) -> dict:
+        """Xuất bundle để joblib.dump()."""
+        return {
+            "scaler": self.scaler,
+            "cat_col_map": self.cat_col_map,
+            "feature_matrix": self.feature_matrix,
+            "df": self.df,
+        }
 
-        Trả về (chi_tiet: dict[str, float], giai_thich: list[str]).
+    # ------------------------------------------------------------------
+    def unique_values(self, col: str):
+        return sorted(self.df[col].dropna().astype(str).unique().tolist())
+
+    # ------------------------------------------------------------------
+    def _hard_filter_mask(self, query: dict) -> np.ndarray:
+        """Lọc cứng theo 3 tiêu chí số (Giá, Công suất, Chỗ ngồi).
+
+        Trả về numpy bool array, True = xe còn lại trong tập ứng viên.
         """
-        chi_tiet = {}
-        giai_thich = []
+        mask = np.ones(len(self.df), dtype=bool)
+        if "Giá( VNĐ)" in query:
+            mask &= (self.df["Giá( VNĐ)"].values <= float(query["Giá( VNĐ)"]))
+        if "Công suất(HP)" in query:
+            mask &= (self.df["Công suất(HP)"].values >= float(query["Công suất(HP)"]))
+        if "Chỗ ngồi" in query:
+            mask &= (self.df["Chỗ ngồi"].values >= float(query["Chỗ ngồi"]))
+        return mask
 
-        for col in NUMERIC_COLS:
-            target = query.get(col)
-            if target is None:
-                continue
-            car_scaled = self._scale_numeric(col, row[col])
-            target_scaled = self._scale_numeric(col, target)
-            pct = round((1.0 - abs(car_scaled - target_scaled)) * 100, 1)
-            chi_tiet[col] = pct
+    def _per_dimension_weights(self, group_weights: dict, query: dict) -> np.ndarray:
+        """Vector trọng số theo đúng thứ tự cột của feature_matrix.
 
-            if col == "Giá( VNĐ)":
-                car_text = f"{row[col]:,.0f}".replace(",", ".") + " VNĐ"
-                target_text = f"{target:,.0f}".replace(",", ".") + " VNĐ"
-            elif col == "Công suất(HP)":
-                car_text, target_text = f"{row[col]:g} HP", f"{target:g} HP"
-            else:
-                car_text, target_text = f"{int(row[col])} chỗ", f"{int(target)} chỗ"
-
-            if pct >= 80:
-                giai_thich.append(f"✓ {col}: xe có {car_text}, rất sát yêu cầu ({target_text}).")
-            else:
-                giai_thich.append(f"✗ {col}: xe có {car_text}, lệch khá nhiều so với yêu cầu ({target_text}).")
-
-        for col in CATEGORICAL_COLS:
-            target = query.get(col)
-            if target is None:
-                continue
-            car_val = row[col]
-            pct = 100.0 if str(car_val) == str(target) else 0.0
-            chi_tiet[col] = pct
-            if pct == 100.0:
-                giai_thich.append(f"✓ {col}: đúng yêu cầu ({target}).")
-            else:
-                giai_thich.append(f"✗ {col}: xe là '{car_val}', khác với yêu cầu '{target}'.")
-
-        return chi_tiet, giai_thich
-
-    def _per_dimension_weights(self, group_weights: dict) -> np.ndarray:
-        """
-        Áp dụng công thức (2.4): w_g,j = W_g / m_g cho từng cột One-Hot;
-        với cột số, w = W_g trực tiếp (m_g = 1).
-        Trả về vector trọng số theo đúng thứ tự cột của feature_matrix.
+        - Cột số: LUÔN có weight = 0 (đã là hard filter, không tham gia KNN).
+        - Cột phân loại: nếu xuất hiện trong query mới có weight; chia đều
+          cho số cột one-hot sinh ra từ tiêu chí đó (công thức 2.4):
+              w_g,j = W_g / m_g
         """
         weights = []
-        for col in NUMERIC_COLS:
-            weights.append(group_weights.get(col, 0.0))
+        for _ in NUMERIC_COLS:
+            weights.append(0.0)
+
         for col in CATEGORICAL_COLS:
             sub_cols = self.cat_col_map[col]
             m_g = max(len(sub_cols), 1)
-            w_gj = group_weights.get(col, 0.0) / m_g
+            if col in query:
+                w_gj = group_weights.get(col, 0.0) / m_g
+            else:
+                w_gj = 0.0
             weights.extend([w_gj] * len(sub_cols))
         return np.array(weights, dtype=float)
 
     def _encode_query(self, query: dict) -> np.ndarray:
-        """Chuyển tiêu chí khách hàng thành vector cùng không gian đặc trưng."""
-        row = {}
-        numeric_input = {col: query.get(col) for col in NUMERIC_COLS}
-        numeric_df = pd.DataFrame([numeric_input])
-        for col in NUMERIC_COLS:
-            if pd.isna(numeric_df[col].iloc[0]):
-                # Không nhập -> đặt ở tâm thang đo để không lệch về hướng nào
-                numeric_df[col] = 0.5
-                row[col] = 0.5
-        scaled_known = self.scaler.transform(
-            numeric_df[NUMERIC_COLS].fillna(0)
-        )[0]
-        for i, col in enumerate(NUMERIC_COLS):
-            if col not in row:
-                row[col] = float(np.clip(scaled_known[i], 0.0, 1.0))
+        """Chuyển tiêu chí người dùng thành vector cùng không gian đặc trưng.
+
+        - Cột số: đặt 0.5 (trung tính) — vì weight = 0 nên không ảnh hưởng.
+        - Cột phân loại: 1.0 nếu khớp category người dùng chọn, ngược lại 0.0.
+        """
+        row = {col: 0.5 for col in NUMERIC_COLS}
 
         for col in CATEGORICAL_COLS:
             chosen = query.get(col)
@@ -193,52 +198,102 @@ class CarRecommender:
 
         return pd.DataFrame([row])[self.feature_matrix.columns].values[0].astype(float)
 
-    def recommend(self, query: dict, weights: dict = None, k: int = 5) -> pd.DataFrame:
-        """
-        Quy trình suy luận: (1) nhận tiêu chí + lọc cứng theo ngân sách;
-        (2) dùng bộ trọng số người dùng đã chỉnh (đã được chuẩn hóa tổng = 1
-        ở tầng giao diện qua normalize_weights()); (3) chuẩn hóa vector truy vấn;
-        (4) tính khoảng cách có trọng số trên tập xe hợp lệ; (5) sắp xếp lấy top-k.
+    # ------------------------------------------------------------------
+    def _criteria_breakdown(self, query: dict, row: pd.Series):
+        """Trả về (chi_tiet, giai_thich) cho 1 xe cụ thể.
 
-        weights: dict 8 khóa (ALL_GROUPS) đã chuẩn hóa tổng = 1. Nếu để None,
-        dùng DEFAULT_WEIGHTS (chia đều).
+        - 3 tiêu chí số: hiển thị pass/fail (100% nếu qua filter, 0% nếu không
+          — nhưng trên thực tế mọi xe đã qua filter đều = 100%).
+        - 5 tiêu chí phân loại: 100% nếu trùng, 0% nếu khác.
         """
-        # (1) Lọc cứng theo ngân sách tối đa (Giai đoạn 1)
-        budget = query.get("Giá( VNĐ)")
-        if budget is not None:
-            mask = self.df["Giá( VNĐ)"] <= budget
-            valid_df = self.df[mask].reset_index(drop=True)
-            valid_features = self.feature_matrix.loc[mask].reset_index(drop=True)
-        else:
-            valid_df = self.df
-            valid_features = self.feature_matrix
+        chi_tiet: dict[str, float] = {}
+        giai_thich: list[str] = []
+
+        for col in NUMERIC_COLS:
+            if col not in query:
+                continue
+            target = float(query[col])
+            car_val = float(row[col])
+
+            if col == "Giá( VNĐ)":
+                passed = car_val <= target
+                car_text = f"{car_val:,.0f}".replace(",", ".") + " VNĐ"
+                target_text = f"{target:,.0f}".replace(",", ".") + " VNĐ"
+                if passed:
+                    giai_thich.append(f"✓ Giá: {car_text} (≤ {target_text}) — đạt yêu cầu.")
+                else:
+                    giai_thich.append(f"✗ Giá: {car_text} (> {target_text}) — vượt ngân sách.")
+            elif col == "Công suất(HP)":
+                passed = car_val >= target
+                if passed:
+                    giai_thich.append(f"✓ Công suất: {car_val:g} HP (≥ {target:g} HP) — đạt yêu cầu.")
+                else:
+                    giai_thich.append(f"✗ Công suất: {car_val:g} HP (< {target:g} HP) — chưa đạt mức tối thiểu.")
+            else:  # Chỗ ngồi
+                passed = car_val >= target
+                if passed:
+                    giai_thich.append(f"✓ Số chỗ: {int(car_val)} (≥ {int(target)}) — đạt yêu cầu.")
+                else:
+                    giai_thich.append(f"✗ Số chỗ: {int(car_val)} (< {int(target)}) — chưa đạt mức tối thiểu.")
+
+            chi_tiet[col] = 100.0 if passed else 0.0
+
+        for col in CATEGORICAL_COLS:
+            if col not in query:
+                continue
+            target = query[col]
+            car_val = row[col]
+            pct = 100.0 if str(car_val) == str(target) else 0.0
+            chi_tiet[col] = pct
+            if pct == 100.0:
+                giai_thich.append(f"✓ {col}: đúng yêu cầu ({target}).")
+            else:
+                giai_thich.append(f"✗ {col}: xe là '{car_val}', khác yêu cầu '{target}'.")
+
+        return chi_tiet, giai_thich
+
+    # ------------------------------------------------------------------
+    def recommend(self, query: dict, weights: dict | None = None, k: int = 5) -> pd.DataFrame:
+        """Quy trình:
+            1) Lọc cứng (budget / power min / seats min).
+            2) Vector trọng số (chỉ categorical có weight).
+            3) Encode query.
+            4) Khoảng cách Euclid có trọng số trên tập ứng viên.
+            5) Sắp xếp, lấy top-k, gắn điểm phù hợp + giải thích.
+        """
+        # (1) Lọc cứng
+        mask = self._hard_filter_mask(query)
+        valid_df = self.df[mask].reset_index(drop=True)
+        valid_features = self.feature_matrix[mask].reset_index(drop=True)
 
         if len(valid_df) == 0:
             return valid_df.assign(**{"Khoảng cách": [], "Độ phù hợp (%)": []})
 
-        # (2) Bộ trọng số do người dùng chỉnh tay (đã chuẩn hóa tổng = 1)
+        # (2) Trọng số
         group_weights = weights if weights is not None else DEFAULT_WEIGHTS
-        w = self._per_dimension_weights(group_weights)
+        w = self._per_dimension_weights(group_weights, query)
 
-        # (3) Chuẩn hóa vector truy vấn
+        # Nếu không có trọng số nào > 0 (user bỏ hết categorical), thì tất cả
+        # xe đều có distance = 0 → top-k là k xe đầu tiên (theo thứ tự CSV).
+        # Đây là edge case, chấp nhận được.
+
+        # (3) Encode query
         q_vector = self._encode_query(query)
 
-        # (4) Khoảng cách Euclid có trọng số: d_w = sqrt(sum(w_i * (p_i - q_i)^2))
+        # (4) Khoảng cách
         diff_sq = (valid_features.values - q_vector) ** 2
         d_w = np.sqrt((diff_sq * w).sum(axis=1))
 
-        # (5) Sắp xếp và lấy top-k
+        # (5) Top-k
         k = min(k, len(valid_df))
         order = np.argsort(d_w)[:k]
 
         result = valid_df.iloc[order].copy()
         result["Khoảng cách"] = d_w[order]
-        # Công thức (2.7): Score = 1 / (1 + d_w) * 100%
         result["Độ phù hợp (%)"] = (1.0 / (1.0 + result["Khoảng cách"]) * 100).round(1)
         result = result.reset_index(drop=True)
 
-        # (6) Chi tiết % đáp ứng từng tiêu chí + giải thích, phục vụ mục
-        # "3. Giải thích lý do đề xuất" ở giao diện (thay cho biểu đồ cột tổng quát).
+        # (6) Chi tiết + giải thích
         chi_tiet_list, giai_thich_list = [], []
         for _, row in result.iterrows():
             chi_tiet, giai_thich = self._criteria_breakdown(query, row)
@@ -248,8 +303,3 @@ class CarRecommender:
         result["Giải thích"] = giai_thich_list
 
         return result
-
-    def unique_values(self, col: str):
-        return sorted(self.df[col].dropna().unique().tolist())
-
-
